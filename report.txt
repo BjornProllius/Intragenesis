@@ -1,0 +1,282 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 63.48     20.84    20.84 51875840     0.00     0.00  collectNeighbourData
+ 12.58     24.97     4.13 415347565     0.00     0.00  calculateIdentityDistance
+  4.77     26.54     1.56 1197750592     0.00     0.00  pcg32
+  2.38     27.32     0.78 51875840     0.00     0.00  shuffleDirections
+  2.04     27.98     0.67 51875840     0.00     0.00  collectChildData
+  2.04     28.66     0.67      346     1.94     1.94  drawGridByInternalValues
+  1.83     29.25     0.60 51875840     0.00     0.00  updateCellIdentity
+  1.64     29.80     0.54 38388382     0.00     0.00  updateFutureIdentity
+  1.52     30.30     0.50 51875840     0.00     0.00  collectCommunityData
+  1.36     30.74     0.45 51875840     0.00     0.00  resetCell
+  1.10     31.10     0.36 51875840     0.00     0.00  pickAction
+  0.97     31.42     0.32      250     1.28     1.28  drawGridByTeam
+  0.94     31.73     0.31     1788     0.17    17.72  iterateCells
+  0.69     31.95     0.23 51875840     0.00     0.00  collectParentData
+  0.55     32.13     0.18 115957760     0.00     0.00  findStartIndexOfLevel
+  0.53     32.31     0.17 47874990     0.00     0.00  pickNeighbourTarget
+  0.43     32.45     0.14 51875840     0.00     0.00  collectCommunityDataCallback
+  0.35     32.56     0.12      596     0.19     0.19  generateRandomTarget
+  0.24     32.65     0.08 51875840     0.00     0.00  updateCellIdentityCallback
+  0.23     32.72     0.07 51265536     0.00     0.00  findParentIndex
+  0.21     32.79     0.07 51875840     0.00     0.00  pickActionCallback
+  0.12     32.83     0.04                             _init
+  0.00     32.83     0.00    87040     0.00     0.00  initializeCell
+  0.00     32.83     0.00        1     0.00     0.00  createGrid
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.03% of 32.83 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     99.9    0.00   32.79                 main [1]
+                0.31   31.38    1788/1788        iterateCells [2]
+                0.67    0.00     346/346         drawGridByInternalValues [13]
+                0.32    0.00     250/250         drawGridByTeam [18]
+                0.12    0.00     596/596         generateRandomTarget [21]
+                0.00    0.00       1/1           createGrid [25]
+-----------------------------------------------
+                0.31   31.38    1788/1788        main [1]
+[2]     96.5    0.31   31.38    1788         iterateCells [2]
+                0.14   29.50 51875840/51875840     collectCommunityDataCallback [3]
+                0.07    0.98 51875840/51875840     pickActionCallback [9]
+                0.08    0.60 51875840/51875840     updateCellIdentityCallback [12]
+-----------------------------------------------
+                0.14   29.50 51875840/51875840     iterateCells [2]
+[3]     90.3    0.14   29.50 51875840         collectCommunityDataCallback [3]
+                0.50   29.00 51875840/51875840     collectCommunityData [4]
+-----------------------------------------------
+                0.50   29.00 51875840/51875840     collectCommunityDataCallback [3]
+[4]     89.9    0.50   29.00 51875840         collectCommunityData [4]
+               20.84    7.00 51875840/51875840     collectNeighbourData [5]
+                0.67    0.08 51875840/51875840     collectChildData [11]
+                0.23    0.18 51875840/51875840     collectParentData [17]
+                0.00    0.00 2296645/1197750592     pcg32 [7]
+-----------------------------------------------
+               20.84    7.00 51875840/51875840     collectCommunityData [4]
+[5]     84.8   20.84    7.00 51875840         collectNeighbourData [5]
+                4.09    0.00 411583296/415347565     calculateIdentityDistance [6]
+                0.78    0.47 51875840/51875840     shuffleDirections [8]
+                1.09    0.00 832323067/1197750592     pcg32 [7]
+                0.49    0.00 34624113/38388382     updateFutureIdentity [15]
+                0.08    0.00 51875840/115957760     findStartIndexOfLevel [19]
+-----------------------------------------------
+                0.01    0.00 1248064/415347565     collectParentData [17]
+                0.03    0.00 2516205/415347565     collectChildData [11]
+                4.09    0.00 411583296/415347565     collectNeighbourData [5]
+[6]     12.6    4.13    0.00 415347565         calculateIdentityDistance [6]
+-----------------------------------------------
+                0.00    0.00 2296645/1197750592     collectCommunityData [4]
+                0.47    0.00 363130880/1197750592     shuffleDirections [8]
+                1.09    0.00 832323067/1197750592     collectNeighbourData [5]
+[7]      4.8    1.56    0.00 1197750592         pcg32 [7]
+-----------------------------------------------
+                0.78    0.47 51875840/51875840     collectNeighbourData [5]
+[8]      3.8    0.78    0.47 51875840         shuffleDirections [8]
+                0.47    0.00 363130880/1197750592     pcg32 [7]
+-----------------------------------------------
+                0.07    0.98 51875840/51875840     iterateCells [2]
+[9]      3.2    0.07    0.98 51875840         pickActionCallback [9]
+                0.36    0.62 51875840/51875840     pickAction [10]
+-----------------------------------------------
+                0.36    0.62 51875840/51875840     pickActionCallback [9]
+[10]     3.0    0.36    0.62 51875840         pickAction [10]
+                0.45    0.00 51875840/51875840     resetCell [16]
+                0.17    0.00 47874990/47874990     pickNeighbourTarget [20]
+-----------------------------------------------
+                0.67    0.08 51875840/51875840     collectCommunityData [4]
+[11]     2.3    0.67    0.08 51875840         collectChildData [11]
+                0.04    0.00 2516205/38388382     updateFutureIdentity [15]
+                0.03    0.00 2516205/415347565     calculateIdentityDistance [6]
+                0.02    0.00 12816384/115957760     findStartIndexOfLevel [19]
+-----------------------------------------------
+                0.08    0.60 51875840/51875840     iterateCells [2]
+[12]     2.1    0.08    0.60 51875840         updateCellIdentityCallback [12]
+                0.60    0.00 51875840/51875840     updateCellIdentity [14]
+-----------------------------------------------
+                0.67    0.00     346/346         main [1]
+[13]     2.0    0.67    0.00     346         drawGridByInternalValues [13]
+-----------------------------------------------
+                0.60    0.00 51875840/51875840     updateCellIdentityCallback [12]
+[14]     1.8    0.60    0.00 51875840         updateCellIdentity [14]
+-----------------------------------------------
+                0.02    0.00 1248064/38388382     collectParentData [17]
+                0.04    0.00 2516205/38388382     collectChildData [11]
+                0.49    0.00 34624113/38388382     collectNeighbourData [5]
+[15]     1.6    0.54    0.00 38388382         updateFutureIdentity [15]
+-----------------------------------------------
+                0.45    0.00 51875840/51875840     pickAction [10]
+[16]     1.4    0.45    0.00 51875840         resetCell [16]
+-----------------------------------------------
+                0.23    0.18 51875840/51875840     collectCommunityData [4]
+[17]     1.2    0.23    0.18 51875840         collectParentData [17]
+                0.08    0.00 51265536/115957760     findStartIndexOfLevel [19]
+                0.07    0.00 51265536/51265536     findParentIndex [22]
+                0.02    0.00 1248064/38388382     updateFutureIdentity [15]
+                0.01    0.00 1248064/415347565     calculateIdentityDistance [6]
+-----------------------------------------------
+                0.32    0.00     250/250         main [1]
+[18]     1.0    0.32    0.00     250         drawGridByTeam [18]
+-----------------------------------------------
+                0.02    0.00 12816384/115957760     collectChildData [11]
+                0.08    0.00 51265536/115957760     collectParentData [17]
+                0.08    0.00 51875840/115957760     collectNeighbourData [5]
+[19]     0.5    0.18    0.00 115957760         findStartIndexOfLevel [19]
+-----------------------------------------------
+                0.17    0.00 47874990/47874990     pickAction [10]
+[20]     0.5    0.17    0.00 47874990         pickNeighbourTarget [20]
+-----------------------------------------------
+                0.12    0.00     596/596         main [1]
+[21]     0.4    0.12    0.00     596         generateRandomTarget [21]
+-----------------------------------------------
+                0.07    0.00 51265536/51265536     collectParentData [17]
+[22]     0.2    0.07    0.00 51265536         findParentIndex [22]
+-----------------------------------------------
+                                                 <spontaneous>
+[23]     0.1    0.04    0.00                 _init [23]
+-----------------------------------------------
+                0.00    0.00   87040/87040       createGrid [25]
+[24]     0.0    0.00    0.00   87040         initializeCell [24]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[25]     0.0    0.00    0.00       1         createGrid [25]
+                0.00    0.00   87040/87040       initializeCell [24]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2022 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [23] _init                  [13] drawGridByInternalValues [10] pickAction
+   [6] calculateIdentityDistance [18] drawGridByTeam       [9] pickActionCallback
+  [11] collectChildData       [22] findParentIndex        [20] pickNeighbourTarget
+   [4] collectCommunityData   [19] findStartIndexOfLevel  [16] resetCell
+   [3] collectCommunityDataCallback [21] generateRandomTarget [8] shuffleDirections
+   [5] collectNeighbourData   [24] initializeCell         [14] updateCellIdentity
+  [17] collectParentData       [2] iterateCells           [12] updateCellIdentityCallback
+  [25] createGrid              [7] pcg32                  [15] updateFutureIdentity
