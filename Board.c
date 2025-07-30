@@ -12,21 +12,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-typedef struct {
-    Cell* grid;
-    int startIndex;
-    int endIndex;
-    void (*callback)(Cell*, int);
-} ThreadArgs;
-
-void* threadFunction(void* args) {
-    ThreadArgs* threadArgs = (ThreadArgs*)args;
-    for (int i = threadArgs->startIndex; i < threadArgs->endIndex; i++) {
-        threadArgs->callback(threadArgs->grid, i);
-    }
-    return NULL;
-}
-
 SDL_Color teamColors[16] = {
     {255, 255, 255, 255}, // Team 0: White
     {0, 0, 0, 255},       // Team 1: Black
@@ -50,15 +35,40 @@ SDL_Color teamColors[16] = {
 
 uint64_t pcgState = 123456789; // Global state for random number generation
 
+__thread uint64_t threadLocalPcgState = 123456789; // Thread-local state for each thread
 
 
-uint32_t pcg32(uint64_t* state) {
-    uint64_t oldState = *state;
-    *state = oldState * 6364136223846793005ULL + 1;
+uint32_t pcg32() {
+    uint64_t oldState = threadLocalPcgState;
+    threadLocalPcgState = oldState * 6364136223846793005ULL + 1;
     uint32_t xorshifted = ((oldState >> 18u) ^ oldState) >> 27u;
     uint32_t rot = oldState >> 59u;
     return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
 }
+
+
+
+typedef struct {
+    Cell* grid;
+    int startIndex;
+    int endIndex;
+    void (*callback)(Cell*, int);
+} ThreadArgs;
+
+void* threadFunction(void* args) {
+    ThreadArgs* threadArgs = (ThreadArgs*)args;
+
+    // Initialize thread-local random state with a unique seed
+    threadLocalPcgState = (uint64_t)pthread_self(); // Use thread ID as seed
+
+    for (int i = threadArgs->startIndex; i < threadArgs->endIndex; i++) {
+        threadArgs->callback(threadArgs->grid, i);
+    }
+    return NULL;
+}
+
+
+
 
 int renderByTeam = 0; // 0: Render by internal values, 1: Render by team
 
@@ -70,14 +80,13 @@ int renderByTeam = 0; // 0: Render by internal values, 1: Render by team
 
 unsigned int targetVectors[16][NUM_VALUES];
 
-void generateRandomTarget(unsigned int targetVectors[16][NUM_VALUES]) {
-    for (int team = 0; team < 16; team++) { // Iterate over each team
-        for (int i = 0; i < NUM_VALUES; i++) { // Generate random values for each entry in the target vector
-            targetVectors[team][i] = pcg32(&pcgState) % 16; // Random value in the range [0, 15]
+void generateRandomTargetForThread(unsigned int threadTargetVectors[16][NUM_VALUES]) {
+    for (int team = 0; team < 16; team++) {
+        for (int i = 0; i < NUM_VALUES; i++) {
+            threadTargetVectors[team][i] = pcg32() % 16; // Use thread-safe pcg32
         }
     }
 }
-
 
 
 // Function to iterate over all cells and apply a callback
@@ -296,24 +305,24 @@ int main() {
 
         generateRandomTarget(targetVectors); // Generate random values for the target vectors
 
-        // Pick actions for all cells
-         iterateCells(grid, totalCells, pickActionCallback);
+        // // Pick actions for all cells
+        //  iterateCells(grid, totalCells, pickActionCallback);
 
-        // Collect community data for all cells
-         iterateCells(grid, totalCells, collectCommunityDataCallback);
-
-        // Update cell identities for all cells
-         iterateCells(grid, totalCells, updateCellIdentityCallback);
-
-
-        //         // Pick actions for all cells
-        // iterateCellsMultithreaded(grid, totalCells, pickActionCallback);
-        
         // // Collect community data for all cells
-        // iterateCellsMultithreaded(grid, totalCells, collectCommunityDataCallback);
-        
+        //  iterateCells(grid, totalCells, collectCommunityDataCallback);
+
         // // Update cell identities for all cells
-        // iterateCellsMultithreaded(grid, totalCells, updateCellIdentityCallback);
+        //  iterateCells(grid, totalCells, updateCellIdentityCallback);
+
+
+                // Pick actions for all cells
+        iterateCellsMultithreaded(grid, totalCells, pickActionCallback);
+        
+        // Collect community data for all cells
+        iterateCellsMultithreaded(grid, totalCells, collectCommunityDataCallback);
+        
+        // Update cell identities for all cells
+        iterateCellsMultithreaded(grid, totalCells, updateCellIdentityCallback);
 
         // Render the grid
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Set background color to black
