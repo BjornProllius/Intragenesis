@@ -99,7 +99,7 @@ void initializeCell(Cell* cell, uint8_t level, int index) {
     }
 
     //initialize the payload vector
-    for (int i = 0; i < NUM_VALUES - 1; i++) {
+    for (int i = 0; i < NUM_VALUES; i++) {
         unsigned int randomValue = rand() % 16; // Random value between 0 and 15
         cell->payload[i] = (randomValue << 4) | randomValue; // Set the first 4 bits and copy them into the last 4 bits
     }

@@ -70,12 +70,10 @@ int renderByTeam = 0; // 0: Render by internal values, 1: Render by team
 
 unsigned int targetVectors[16][NUM_VALUES];
 
-//each layer should get its own random target vector. Perhaps even chunks within the layer
 void generateRandomTarget(unsigned int targetVectors[16][NUM_VALUES]) {
     for (int team = 0; team < 16; team++) { // Iterate over each team
         for (int i = 0; i < NUM_VALUES; i++) { // Generate random values for each entry in the target vector
-            // Generate a random number in the range [0, 15]
-            targetVectors[team][i] = rand() % 16; // Use modulo to fit the range [0, 15]
+            targetVectors[team][i] = pcg32(&pcgState) % 16; // Random value in the range [0, 15]
         }
     }
 }
@@ -113,15 +111,13 @@ void iterateCellsMultithreaded(Cell* grid, int totalCells, void (*callback)(Cell
     }
 }
 
-// Callback for picking actions
 void pickActionCallback(Cell* grid, int index) {
-    // Select a random target vector from the 2D array
-    unsigned int* randomTargetVector = targetVectors[rand() % 16]; // Pick a random team index (0-15)
+    // Select a random target vector from the pre-generated array
+    int randomTeam = pcg32(&pcgState) % 16; // Random team index (0-15)
+    unsigned int* randomTargetVector = targetVectors[randomTeam];
 
     // Pass the random target vector to the pickAction function
     pickAction(grid, index, randomTargetVector);
-
-
 }
 
 // Callback for collecting community data
@@ -266,6 +262,8 @@ int main() {
     clock_t startTime = clock();
 
     while (running) {
+        // Generate random target vectors for this iteration
+        generateRandomTarget(targetVectors);      
         
         // Handle SDL events
         SDL_Event event;
@@ -322,9 +320,9 @@ int main() {
         SDL_RenderClear(renderer); // Clear the screen
 
         if (renderByTeam) {
-            drawGridByTeam(renderer, grid, rows, cols, currentLevel); // Render by team at the current level
+            //drawGridByTeam(renderer, grid, rows, cols, currentLevel); // Render by team at the current level
         } else {
-            drawGridByInternalValues(renderer, grid, rows, cols, currentLevel); // Render by internal values at the current level
+            //drawGridByInternalValues(renderer, grid, rows, cols, currentLevel); // Render by internal values at the current level
         }
 
         SDL_RenderPresent(renderer); // Present the rendered frame

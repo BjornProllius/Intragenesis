@@ -2,7 +2,7 @@
 CC = gcc
 
 # Compiler flags
-CFLAGS = -Wall -Wextra -std=c11
+CFLAGS = -Wall -Wextra -std=c11 -g
 
 # SDL2 library flags
 LDFLAGS = -lSDL2 -lm -pthread

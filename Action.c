@@ -59,6 +59,8 @@ void pickAction(Cell* grid, int index, unsigned int* targetVector) {
 
     // pick influence value
     //printf("cellInfluence value: %d\n", cellInfluence);
+    //targetVector[INFLUENCE] = 5;
+    //cellInfluence = 4; // Default to clone
     if (cellInfluence >= targetVector[INFLUENCE]) {
         // Cell chooses to clone
         cell->influence = 0; // Set influence to clone

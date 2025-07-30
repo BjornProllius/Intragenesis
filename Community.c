@@ -86,8 +86,9 @@ void collectNeighbourData(Cell* grid, int index) {
 
         // Precompute bounds checks
         if (neighbourRow < 0 || neighbourRow >= rows || neighbourCol < 0 || neighbourCol >= cols) {
-            continue; // Skip out-of-bounds neighbors
             cell->neighbourInfo[i].exists = 0;
+            continue; // Skip out-of-bounds neighbors
+            
         }
 
         // Calculate the 1D index of the neighbour
