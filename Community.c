@@ -8,6 +8,7 @@
 void resolveInput(Cell* grid, Cell* cell, int index);
 
 
+//currently the whole cell is being copied each time. In the future, only copy parts of the cell
 
 // Define relative offsets for the 8 neighbours as a global constant
 const int directions[8][2] = {
@@ -378,15 +379,28 @@ void resolveInput(Cell* grid, Cell* cell, int index) {
 
     // Apply the winning talker logic
     if (winningTalkerIndex >= 0) {
-        //use that same early copy
-        Cell* winningTalker = &grid[winningTalkerIndex];
-        applyWinningTalker(cell, winningTalker);
+        Cell tempWinningTalker;
+    
+        // Lock the winning talker and make a copy
+        pthread_mutex_lock(&grid[winningTalkerIndex].lock);
+        memcpy(&tempWinningTalker, &grid[winningTalkerIndex], sizeof(Cell));
+        pthread_mutex_unlock(&grid[winningTalkerIndex].lock);
+    
+        // Pass the copy to the function
+        applyWinningTalker(cell, &tempWinningTalker);
     }
-
+    
     // Apply the winning attacker logic
-    if (winningAttackerIndex >= 0) {        
-        Cell* winningAttacker = &grid[winningAttackerIndex];
-        applyWinningAttacker(cell, winningAttacker, powerAttack);
+    if (winningAttackerIndex >= 0) {
+        Cell tempWinningAttacker;
+    
+        // Lock the winning attacker and make a copy
+        pthread_mutex_lock(&grid[winningAttackerIndex].lock);
+        memcpy(&tempWinningAttacker, &grid[winningAttackerIndex], sizeof(Cell));
+        pthread_mutex_unlock(&grid[winningAttackerIndex].lock);
+    
+        // Pass the copy to the function
+        applyWinningAttacker(cell, &tempWinningAttacker, powerAttack);
     }
 
     //making copies should be ok because the only part that changes are the parts other threads dont
