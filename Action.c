@@ -150,6 +150,10 @@ void pickNeighbourTarget(Cell* grid, int index, bool sameTeam, bool similar) {
     } else {
         cell->targetIndex = -1; // No valid neighbor found
     }
+
+
+    //this step should be entirely local to cell
+
 }
 
 

@@ -28,6 +28,7 @@ const int childDirections[4][2] = {
 
 
 
+//make local copies of the cell data then do math on that, then copy changes back
 void collectParentData(Cell* grid, int index) {
     Cell* cell = &grid[index]; // Access the current cell
 
@@ -63,7 +64,11 @@ void collectParentData(Cell* grid, int index) {
 
 }
 
+//consider making local copies the the cells rather than modifying them in place
 void collectNeighbourData(Cell* grid, int index) {
+
+
+    //lock, make copy of cell
     Cell* cell = &grid[index]; // Access the current cell
 
     int rows = BASE_ROWS >> cell->level;
@@ -343,14 +348,13 @@ void resolveInput(Cell* grid, int index) {
 
     initializeInputs(friendlyAttackerIndexes, enemyAttackerIndexes, talkerIndexes);
     
-
+    //pass copy of cell rather than the cell itself to avoid thread conflict
     resolveParentInput(cell, cellTeam, &parentSameTeam, &highestAttackLevel, talkerIndexes, &numTalkers);
     resolveNeighborInput(cell, cellTeam, &highestAttackLevel, friendlyAttackerIndexes, &numFriendlyAttackers,
                          enemyAttackerIndexes, &numEnemyAttackers, talkerIndexes, &numTalkers);
     resolveChildInput(cell, cellTeam, &highestAttackLevel, friendlyAttackerIndexes, &numFriendlyAttackers,
                       enemyAttackerIndexes, &numEnemyAttackers, talkerIndexes, &numTalkers);
 
-    //printf("highestAttackLevel =%d\n", highestAttackLevel);
     
     int winningTalkerIndex = determineWinningTalker(numTalkers, talkerIndexes);
     int winningAttackerIndex = determineWinningAttacker(highestAttackLevel, numEnemyAttackers, enemyAttackerIndexes,
@@ -365,6 +369,7 @@ void resolveInput(Cell* grid, int index) {
 
     // Apply the winning talker logic
     if (winningTalkerIndex >= 0) {
+        //use that same early copy
         Cell* winningTalker = &grid[winningTalkerIndex];
         applyWinningTalker(cell, winningTalker);
     }
@@ -374,6 +379,12 @@ void resolveInput(Cell* grid, int index) {
         Cell* winningAttacker = &grid[winningAttackerIndex];
         applyWinningAttacker(cell, winningAttacker, powerAttack);
     }
+
+    //making copies should be ok because the only part that changes are the parts other threads dont
+    // check in this step?
+
+
+    //in this step cells only look at the neighbours first 4 bits while only modifying their own last 4 bits
 
 
 

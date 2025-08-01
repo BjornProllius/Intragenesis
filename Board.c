@@ -49,8 +49,11 @@ uint32_t pcg32() {
 
 typedef struct {
     Cell* grid;
-    int startIndex;
-    int endIndex;
+    int totalLevels;
+    int rowsPerLevel[LEVELS];
+    int colsPerLevel[LEVELS];
+    int threadId;
+    int numThreads;
     void (*callback)(Cell*, int);
 } ThreadArgs;
 
@@ -60,9 +63,33 @@ void* threadFunction(void* args) {
     // Initialize thread-local random state with a unique seed
     threadLocalPcgState = (uint64_t)pthread_self(); // Use thread ID as seed
 
-    for (int i = threadArgs->startIndex; i < threadArgs->endIndex; i++) {
-        threadArgs->callback(threadArgs->grid, i);
+    Cell* grid = threadArgs->grid;
+    int threadId = threadArgs->threadId;
+    int numThreads = threadArgs->numThreads;
+
+    int startIndex = 0;
+
+    for (int level = 0; level < threadArgs->totalLevels; level++) {
+        int rows = threadArgs->rowsPerLevel[level];
+        int cols = threadArgs->colsPerLevel[level];
+
+        // Divide rows among threads
+        int rowsPerThread = rows / numThreads;
+        int startRow = threadId * rowsPerThread;
+        int endRow = (threadId == numThreads - 1) ? rows : (threadId + 1) * rowsPerThread;
+
+        // Process the assigned rows for this level
+        for (int row = startRow; row < endRow; row++) {
+            for (int col = 0; col < cols; col++) {
+                int index = startIndex + row * cols + col;
+                threadArgs->callback(grid, index);
+            }
+        }
+
+        // Move to the next level
+        startIndex += rows * cols;
     }
+
     return NULL;
 }
 
@@ -84,32 +111,38 @@ void generateRandomTargetForThread(unsigned int threadTargetVectors[16][NUM_VALU
 }
 
 
-// Function to iterate over all cells and apply a callback
-void iterateCells(Cell* grid, int totalCells, void (*callback)(Cell*, int)) {
-
-    for (int i = 0; i < totalCells; i++) {
-        callback(grid, i); // Call the callback function for the current cell
-
-    }
-}
 
 
-void iterateCellsMultithreaded(Cell* grid, int totalCells, void (*callback)(Cell*, int)) {
-    const int numThreads = 4;
+void iterateCellsMultithreaded(Cell* grid, int totalCells, int totalLevels, int baseRows, int baseCols, void (*callback)(Cell*, int)) {
+    const int numThreads = 4; // Number of threads
     pthread_t threads[numThreads];
     ThreadArgs threadArgs[numThreads];
 
-    int chunkSize = totalCells / numThreads;
+    // Calculate rows and columns for each level
+    int rows = baseRows;
+    int cols = baseCols;
 
     for (int i = 0; i < numThreads; i++) {
         threadArgs[i].grid = grid;
-        threadArgs[i].startIndex = i * chunkSize;
-        threadArgs[i].endIndex = (i == numThreads - 1) ? totalCells : (i + 1) * chunkSize;
+        threadArgs[i].totalLevels = totalLevels;
+        threadArgs[i].numThreads = numThreads;
         threadArgs[i].callback = callback;
+        threadArgs[i].threadId = i;
 
+        for (int level = 0; level < totalLevels; level++) {
+            threadArgs[i].rowsPerLevel[level] = rows;
+            threadArgs[i].colsPerLevel[level] = cols;
+            rows /= 2; // Each level has half the rows
+            cols /= 2; // Each level has half the columns
+        }
+    }
+
+    // Create threads
+    for (int i = 0; i < numThreads; i++) {
         pthread_create(&threads[i], NULL, threadFunction, &threadArgs[i]);
     }
 
+    // Wait for threads to finish
     for (int i = 0; i < numThreads; i++) {
         pthread_join(threads[i], NULL);
     }
