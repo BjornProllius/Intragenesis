@@ -28,6 +28,6 @@
 #define NUM_TEAMS 15 // Number of teams in the simulation
 
 
-#define CELL_SIZE 4 // Size of each cell in pixels
+#define CELL_SIZE 2 // Size of each cell in pixels
 
 #endif // CONFIG_H

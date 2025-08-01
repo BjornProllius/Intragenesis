@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "config.h"
+#include <pthread.h>
 
 // this can be used to store data about another cell in the grid
 typedef struct foreignCellData {
@@ -13,6 +14,7 @@ typedef struct foreignCellData {
     int8_t action; // -1 if not targeting current cell, other numbers for other things
     unsigned int influence : 1; // clone = 0, payload = 1
     unsigned int exists : 1; // 0 if invalid, 1 if valid
+  
 
 } foreignCellData;
 
@@ -68,6 +70,7 @@ typedef struct Cell {
     unsigned int action : 1; // Action of the cell (0 = attack, 1 = talk) (1 bit)
     unsigned int influence : 1; // clone = 0, payload = 1
     
+    pthread_mutex_t lock; // Mutex for synchronizing access to this data
 
 } Cell;
 

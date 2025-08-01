@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // Declare the pcg32 function
-uint32_t pcg32(uint64_t* state);
+uint32_t pcg32();
 
 // Declare the shared state variable
 extern uint64_t pcgState;

@@ -70,6 +70,11 @@ Cell* createGrid() {
 void initializeCell(Cell* cell, uint8_t level, int index) {
 
 
+    //     if (pthread_mutex_init(&cell->lock, NULL) != 0) {
+    //     fprintf(stderr, "Mutex initialization failed for cell at index %d\n", index);
+    //     exit(EXIT_FAILURE);
+    // }
+
         // Initialize interaction-related fields
     cell->action = rand() % 2; // Random action: 0 = attack, 1 = talk
     cell->influence = rand() % 2; // Random influence: 0 = clone, 1 = payload

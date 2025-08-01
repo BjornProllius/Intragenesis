@@ -51,8 +51,14 @@ void collectParentData(Cell* grid, int index) {
 
 
     Cell* parent = &grid[parentIndex]; // Access the parent cell
+
+    // Retry mechanism for acquiring both locks
+    tryLockBoth(&cell->lock, &parent->lock);
     
-    populateForeignCellData(&cell->parentInfo, parent, parentIndex);    
+    populateForeignCellData(&cell->parentInfo, parent, parentIndex);  
+        // Unlock both the current cell and the neighbour
+    pthread_mutex_unlock(&parent->lock);
+    pthread_mutex_unlock(&cell->lock);      
 
 
 }
@@ -64,17 +70,8 @@ void collectNeighbourData(Cell* grid, int index) {
     int cols = BASE_COLS >> cell->level;
     int row = cell->row;
     int col = cell->col;
-    
-
-
-    
-    //uint8_t neighbourIdentity[NUM_VALUES] = {0}; // Preload neighbour identity
-    //uint8_t cellIdentity[NUM_VALUES] = {0}; // Preload cell identity
-    
 
     int levelStartIndex = findStartIndexOfLevel(cell->level); // Get the start index of the current level
-
-
 
     int localDirections[8][2]; // Local copy of directions to shuffle
     memcpy(localDirections, directions, sizeof(directions)); // Copy global directions to local array
@@ -88,7 +85,6 @@ void collectNeighbourData(Cell* grid, int index) {
         if (neighbourRow < 0 || neighbourRow >= rows || neighbourCol < 0 || neighbourCol >= cols) {
             cell->neighbourInfo[i].exists = 0;
             continue; // Skip out-of-bounds neighbors
-            
         }
 
         // Calculate the 1D index of the neighbour
@@ -97,14 +93,15 @@ void collectNeighbourData(Cell* grid, int index) {
         // Access the neighbour cell
         Cell* neighbour = &grid[neighbourIndex];
 
-
+        // Retry mechanism for acquiring both locks
+        tryLockBoth(&cell->lock, &neighbour->lock);
+        // Populate foreign cell data
         populateForeignCellData(&cell->neighbourInfo[i], neighbour, neighbourIndex);
 
-        
+        // Unlock both the current cell and the neighbour
+        pthread_mutex_unlock(&neighbour->lock);
+        pthread_mutex_unlock(&cell->lock);
     }
-
-
-
 }
 
 
@@ -149,17 +146,23 @@ void collectChildData(Cell* grid, int index) {
             int childIndex = childStartIndex + childRow * childCols + childCol;
 
             Cell* child = &grid[childIndex]; // Access the child cell
+
+        // Retry mechanism for acquiring both locks
+            tryLockBoth(&cell->lock, &child->lock);
+
+
             populateForeignCellData(&cell->childInfo[i], child, childIndex);
+
+            // Unlock both the current cell and the neighbour
+            pthread_mutex_unlock(&child->lock);
+            pthread_mutex_unlock(&cell->lock);
         }
             
     }
 }
 
 void collectCommunityData(Cell* grid, int index) {
-    
-
  
-
     // Collect data from parent
     collectParentData(grid, index);
  
@@ -170,8 +173,7 @@ void collectCommunityData(Cell* grid, int index) {
     collectChildData(grid, index);
 
     resolveInput(grid, index); // Resolve the input for the cell after collecting all data
-    
-    
+      
 }
 
 
@@ -250,7 +252,7 @@ void resolveChildInput(Cell* cell, int cellTeam, int* highestAttackLevel,
 
 int determineWinningTalker(int numTalkers, int* talkerIndexes) {
     if (numTalkers > 0) {
-        int random = pcg32(&pcgState) % numTalkers;
+        int random = pcg32() % numTalkers;
         return talkerIndexes[random];
     }
     return -1;
@@ -266,10 +268,10 @@ int determineWinningAttacker(int highestAttackLevel, int numEnemyAttackers, int*
         
         return parentSameTeam ? -1 : enemyAttackerIndexes[0]; // Parent attack
     } else if (numEnemyAttackers > numFriendlyAttackers) {
-        int random = pcg32(&pcgState) % numEnemyAttackers;
+        int random = pcg32() % numEnemyAttackers;
         return enemyAttackerIndexes[random];
     } else if (numFriendlyAttackers > 0) {
-        int random = pcg32(&pcgState) % numFriendlyAttackers;
+        int random = pcg32() % numFriendlyAttackers;
         return friendlyAttackerIndexes[random];
     }
     return -1;
@@ -278,6 +280,9 @@ int determineWinningAttacker(int highestAttackLevel, int numEnemyAttackers, int*
 
 
 void applyWinningTalker(Cell* cell, Cell* winningTalker) {
+    // pthread_mutex_lock(&cell->lock); // Lock the cell
+    // pthread_mutex_lock(&winningTalker->lock); // Lock the winning talker cell
+
     if (winningTalker->influence == 0) { // Talker decides to clone
         for (int i = 0; i < NUM_VALUES; i++) {
             uint8_t talkerFirst4Bits = (winningTalker->identity[i] >> 4) & 0x0F; // Extract the first 4 bits
@@ -289,9 +294,15 @@ void applyWinningTalker(Cell* cell, Cell* winningTalker) {
             cell->identity[i] = (cell->identity[i] & 0xF0) | talkerPayloadFirst4Bits;   // Update the last 4 bits
         }
     }
+
+    // pthread_mutex_unlock(&cell->lock); // Unlock the cell
+    // pthread_mutex_unlock(&winningTalker->lock); // Unlock the winning talker cell
 }
 
 void applyWinningAttacker(Cell* cell, Cell* winningAttacker, bool powerAttack) {
+    // pthread_mutex_lock(&winningAttacker->lock); // Lock the cell
+    // pthread_mutex_lock(&cell->lock); // Lock the cell
+
     if (powerAttack) {
         if (winningAttacker->influence == 0) { // Attacker decides to clone
             for (int i = 0; i < NUM_VALUES; i++) {
@@ -309,10 +320,12 @@ void applyWinningAttacker(Cell* cell, Cell* winningAttacker, bool powerAttack) {
             cell->team = (cell->team & 0xF0) | attackerTeamLast4Bits;     // Update only the last 4 bits of the cell's team
         }
     } else {
-        // Update only the last 4 bits of the cell's team with the last 4 bits of the attacker's team
         uint8_t attackerTeamLast4Bits = winningAttacker->team & 0x0F; // Extract the last 4 bits of the attacker's team
         cell->team = (cell->team & 0xF0) | attackerTeamLast4Bits;     // Update only the last 4 bits of the cell's team
     }
+
+    // pthread_mutex_unlock(&cell->lock); // Unlock the cell
+    // pthread_mutex_unlock(&winningAttacker->lock); // Unlock the winning attacker cell
 }
 
 void resolveInput(Cell* grid, int index) {

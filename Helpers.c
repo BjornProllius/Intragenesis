@@ -2,6 +2,10 @@
 #include "Community.h"
 #include "Board.h"
 #include <string.h>
+#include "Helpers.h"
+#include <stdio.h>
+
+
 
 uint32_t calculateSimHash(uint8_t* identity) {
     uint32_t hash = 0;
@@ -28,7 +32,7 @@ int calculateHammingDistance(uint32_t hash1, uint32_t hash2) {
 
 void shuffleDirections(int directions[][2], int size) {
     for (int i = size - 1; i > 0; i--) {
-        int j = pcg32(&pcgState) % (i + 1); // Pick a random index
+        int j = pcg32() % (i + 1); // Pick a random index
         // Swap directions[i] and directions[j]
         int temp0 = directions[i][0];
         int temp1 = directions[i][1];
@@ -74,6 +78,13 @@ void updateCellIdentity(Cell* grid, int index) {
 }
 
 void populateForeignCellData(foreignCellData* foreignData, Cell* cell, int index) {
+
+    if (cell == NULL) {
+        printf("Error: Null cell pointer passed to populateForeignCellData\n");
+        return;
+    }
+    printf("Populating foreign cell data for index %d\n", index);
+
     // Populate the foreignCellData struct with information from the Cell
     foreignData->index = index; // Use the cell's target index
     foreignData->hashValue = cell->identityHash; // Use the cell's identity hash
@@ -91,4 +102,27 @@ void initializeForeignCellData(foreignCellData* data) {
     data->influence = 0;       // Default influence (clone = 0)
     data->exists = 0;          // Mark as invalid (exists = 0)
     data->targetIndex =-1;
+}
+
+
+int tryLockBoth(pthread_mutex_t* lock1, pthread_mutex_t* lock2) {
+    while (1) {
+        if (lock1 < lock2) {
+            if (pthread_mutex_trylock(lock1) == 0) {
+                if (pthread_mutex_trylock(lock2) == 0) {
+                    return 0; // Successfully acquired both locks
+                }
+                pthread_mutex_unlock(lock1);
+            }
+        } else {
+            if (pthread_mutex_trylock(lock2) == 0) {
+                if (pthread_mutex_trylock(lock1) == 0) {
+                    return 0; // Successfully acquired both locks
+                }
+                pthread_mutex_unlock(lock2);
+            }
+        }
+        usleep(10); // Add a small delay to avoid busy-waiting
+    }
+    return -1; // Failed to acquire locks
 }

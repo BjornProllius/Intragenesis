@@ -33,7 +33,6 @@ SDL_Color teamColors[16] = {
 
 //there might be an error in how cells pick idex their parent/children. Maybe the issue is with the render
 
-uint64_t pcgState = 123456789; // Global state for random number generation
 
 __thread uint64_t threadLocalPcgState = 123456789; // Thread-local state for each thread
 
@@ -72,10 +71,6 @@ void* threadFunction(void* args) {
 
 int renderByTeam = 0; // 0: Render by internal values, 1: Render by team
 
-
-//optimization ideas:
-// store as much data locally as possible to reduce neighbour lookups
-// 
 
 
 unsigned int targetVectors[16][NUM_VALUES];
@@ -122,7 +117,7 @@ void iterateCellsMultithreaded(Cell* grid, int totalCells, void (*callback)(Cell
 
 void pickActionCallback(Cell* grid, int index) {
     // Select a random target vector from the pre-generated array
-    int randomTeam = pcg32(&pcgState) % 16; // Random team index (0-15)
+    int randomTeam = pcg32() % 16; // Random team index (0-15)
     unsigned int* randomTargetVector = targetVectors[randomTeam];
 
     // Pass the random target vector to the pickAction function
@@ -212,38 +207,40 @@ void drawGridByInternalValues(SDL_Renderer* renderer, Cell* grid, int rows, int 
 
 int main() {
     srand((unsigned int)time(NULL)); // Seed the random number generator with the current time
-    pcgState = (uint64_t)time(NULL); // Seed with the current time
 
-    // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
-        return EXIT_FAILURE;
-    }
 
-    // Create SDL window
-    SDL_Window* window = SDL_CreateWindow("Grid Visualization", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, BASE_COLS * CELL_SIZE, BASE_ROWS * CELL_SIZE, SDL_WINDOW_SHOWN);
-    if (!window) {
-        fprintf(stderr, "SDL_CreateWindow Error: %s\n", SDL_GetError());
-        SDL_Quit();
-        return EXIT_FAILURE;
-    }
+    // // Initialize SDL
+    // if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    //     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+    //         fprintf(stderr, "SDL_Init Error: %s\n", SDL_GetError());
+    //         return 1;
+    //     }
+    // }
 
-    // Create an SDL renderer
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-        fprintf(stderr, "Failed to create SDL renderer: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return EXIT_FAILURE;
-    }
+    // // Create SDL window
+    // SDL_Window* window = SDL_CreateWindow("Grid Visualization", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, BASE_COLS * CELL_SIZE, BASE_ROWS * CELL_SIZE, SDL_WINDOW_SHOWN);
+    // if (!window) {
+    //     fprintf(stderr, "SDL_CreateWindow Error: %s\n", SDL_GetError());
+    //     SDL_Quit();
+    //     return EXIT_FAILURE;
+    // }
+
+    // // Create an SDL renderer
+    // SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    // if (!renderer) {
+    //     fprintf(stderr, "Failed to create SDL renderer: %s\n", SDL_GetError());
+    //     SDL_DestroyWindow(window);
+    //     SDL_Quit();
+    //     return EXIT_FAILURE;
+    // }
 
     // Create the grid
     Cell* grid = createGrid();
     if (!grid) {
         fprintf(stderr, "Failed to create grid\n");
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+        // SDL_DestroyRenderer(renderer);
+        // SDL_DestroyWindow(window);
+        // SDL_Quit();
         return EXIT_FAILURE;
     }
 
@@ -272,38 +269,35 @@ int main() {
 
     while (running) {
         // Generate random target vectors for this iteration
-        generateRandomTarget(targetVectors);      
+        generateRandomTargetForThread(targetVectors);      
         
         // Handle SDL events
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                running = 0; // Quit if the window is closed
-            } else if (event.type == SDL_KEYDOWN) {
-                if (event.key.keysym.sym == SDLK_q) {
-                    running = 0; // Quit if the 'q' key is pressed
-                } else if (event.key.keysym.sym == SDLK_t) {
-                    renderByTeam = 1; // Switch to rendering by team
-                } else if (event.key.keysym.sym == SDLK_i) {
-                    renderByTeam = 0; // Switch to rendering by internal values
-                } else if (event.key.keysym.sym == SDLK_UP) {
-                    // Increase the level, but ensure it doesn't exceed the maximum level
-                    if (currentLevel < LEVELS - 1) {
-                        currentLevel++;
-                    }
-                } else if (event.key.keysym.sym == SDLK_DOWN) {
-                    // Decrease the level, but ensure it doesn't go below 0
-                    if (currentLevel > 0) {
-                        currentLevel--;
-                    }
-                }
-            }
-        }
+        // SDL_Event event;
+        // while (SDL_PollEvent(&event)) {
+        //     if (event.type == SDL_QUIT) {
+        //         running = 0; // Quit if the window is closed
+        //     } else if (event.type == SDL_KEYDOWN) {
+        //         if (event.key.keysym.sym == SDLK_q) {
+        //             running = 0; // Quit if the 'q' key is pressed
+        //         } else if (event.key.keysym.sym == SDLK_t) {
+        //             renderByTeam = 1; // Switch to rendering by team
+        //         } else if (event.key.keysym.sym == SDLK_i) {
+        //             renderByTeam = 0; // Switch to rendering by internal values
+        //         } else if (event.key.keysym.sym == SDLK_UP) {
+        //             // Increase the level, but ensure it doesn't exceed the maximum level
+        //             if (currentLevel < LEVELS - 1) {
+        //                 currentLevel++;
+        //             }
+        //         } else if (event.key.keysym.sym == SDLK_DOWN) {
+        //             // Decrease the level, but ensure it doesn't go below 0
+        //             if (currentLevel > 0) {
+        //                 currentLevel--;
+        //             }
+        //         }
+        //     }
+        // }
 
-        // Seed the random number generator with the current time
-        pcgState = (uint64_t)time(NULL); // Seed with the current time
 
-        generateRandomTarget(targetVectors); // Generate random values for the target vectors
 
         // // Pick actions for all cells
         //  iterateCells(grid, totalCells, pickActionCallback);
@@ -324,17 +318,17 @@ int main() {
         // Update cell identities for all cells
         iterateCellsMultithreaded(grid, totalCells, updateCellIdentityCallback);
 
-        // Render the grid
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Set background color to black
-        SDL_RenderClear(renderer); // Clear the screen
+        // // Render the grid
+        // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Set background color to black
+        // SDL_RenderClear(renderer); // Clear the screen
 
-        if (renderByTeam) {
-            //drawGridByTeam(renderer, grid, rows, cols, currentLevel); // Render by team at the current level
-        } else {
-            //drawGridByInternalValues(renderer, grid, rows, cols, currentLevel); // Render by internal values at the current level
-        }
+        // if (renderByTeam) {
+        //     //drawGridByTeam(renderer, grid, rows, cols, currentLevel); // Render by team at the current level
+        // } else {
+        //     //drawGridByInternalValues(renderer, grid, rows, cols, currentLevel); // Render by internal values at the current level
+        // }
 
-        SDL_RenderPresent(renderer); // Present the rendered frame
+        // SDL_RenderPresent(renderer); // Present the rendered frame
 
         iterationCount++; // Increment the iteration count
     }
@@ -352,9 +346,9 @@ int main() {
     grid = NULL; // Set the pointer to NULL to avoid accidental access
 
     // Clean up SDL
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    // SDL_DestroyRenderer(renderer);
+    // SDL_DestroyWindow(window);
+    // SDL_Quit();
 
     return 0;
 }

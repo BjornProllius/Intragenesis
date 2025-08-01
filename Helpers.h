@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "Grid.h" // Include Grid.h for access to Cell and related constants
 
+
 // Function to calculate the SimHash of an identity vector
 uint32_t calculateSimHash(uint8_t* identity);
 
