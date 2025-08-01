@@ -5,10 +5,8 @@
 #include "Helpers.h"
 
 
-void resolveInput(Cell* grid, int index);
-//its time to gut and redo this whole polling system
-//Cell values passively drift towards community average
-//Cell can choose to attack or talk to a specific community member.
+void resolveInput(Cell* grid, Cell* cell, int index);
+
 
 
 // Define relative offsets for the 8 neighbours as a global constant
@@ -29,8 +27,8 @@ const int childDirections[4][2] = {
 
 
 //make local copies of the cell data then do math on that, then copy changes back
-void collectParentData(Cell* grid, int index) {
-    Cell* cell = &grid[index]; // Access the current cell
+void collectParentData(Cell* grid, Cell* cell, int index) {
+  
 
     // Check if the cell has a parent
     if (cell->level == LEVELS - 1) {
@@ -52,24 +50,24 @@ void collectParentData(Cell* grid, int index) {
 
 
     Cell* parent = &grid[parentIndex]; // Access the parent cell
+    Cell tempParent;
 
-    // Retry mechanism for acquiring both locks
-    tryLockBoth(&cell->lock, &parent->lock);
-    
-    populateForeignCellData(&cell->parentInfo, parent, parentIndex);  
-        // Unlock both the current cell and the neighbour
+    // Lock the neighbour and make a copy
+    pthread_mutex_lock(&parent->lock);
+    //maybe just copy the important data instead of the whole parent
+    memcpy(&tempParent, parent, sizeof(Cell));
     pthread_mutex_unlock(&parent->lock);
-    pthread_mutex_unlock(&cell->lock);      
+
+
+    
+    populateForeignCellData(&cell->parentInfo, &tempParent, parentIndex);  
+     
 
 
 }
 
 //consider making local copies the the cells rather than modifying them in place
-void collectNeighbourData(Cell* grid, int index) {
-
-
-    //lock, make copy of cell
-    Cell* cell = &grid[index]; // Access the current cell
+void collectNeighbourData(Cell* grid, Cell* cell, int index) {
 
     int rows = BASE_ROWS >> cell->level;
     int cols = BASE_COLS >> cell->level;
@@ -97,22 +95,24 @@ void collectNeighbourData(Cell* grid, int index) {
 
         // Access the neighbour cell
         Cell* neighbour = &grid[neighbourIndex];
+        Cell tempNeighbour;
 
-        // Retry mechanism for acquiring both locks
-        tryLockBoth(&cell->lock, &neighbour->lock);
-        // Populate foreign cell data
-        populateForeignCellData(&cell->neighbourInfo[i], neighbour, neighbourIndex);
-
-        // Unlock both the current cell and the neighbour
+        
+        // Lock the neighbour and make a copy
+        pthread_mutex_lock(&neighbour->lock);
+        memcpy(&tempNeighbour, neighbour, sizeof(Cell));
         pthread_mutex_unlock(&neighbour->lock);
-        pthread_mutex_unlock(&cell->lock);
+
+        // Populate foreign cell data
+        populateForeignCellData(&cell->neighbourInfo[i], &tempNeighbour, neighbourIndex);
+
+
     }
 }
 
 
-void collectChildData(Cell* grid, int index) {
+void collectChildData(Cell* grid, Cell* cell, int index) {
 
-    Cell* cell = &grid[index]; // Access the current cell
 
      // Check if the cell has children
      if (cell->level == 0) {
@@ -151,36 +151,45 @@ void collectChildData(Cell* grid, int index) {
             int childIndex = childStartIndex + childRow * childCols + childCol;
 
             Cell* child = &grid[childIndex]; // Access the child cell
+            Cell tempChild;
 
-        // Retry mechanism for acquiring both locks
-            tryLockBoth(&cell->lock, &child->lock);
-
-
-            populateForeignCellData(&cell->childInfo[i], child, childIndex);
-
-            // Unlock both the current cell and the neighbour
+            // Lock the neighbour and make a copy
+            pthread_mutex_lock(&child->lock);
+            memcpy(&tempChild, child, sizeof(Cell));
             pthread_mutex_unlock(&child->lock);
-            pthread_mutex_unlock(&cell->lock);
+
+
+            populateForeignCellData(&cell->childInfo[i], &tempChild, childIndex);
+
+ 
         }
             
     }
 }
 
 void collectCommunityData(Cell* grid, int index) {
- 
-    // Collect data from parent
-    collectParentData(grid, index);
- 
-    // Collect data from neighbours
-    collectNeighbourData(grid, index);
-    
-    // Collect data from children
-    collectChildData(grid, index);
+    // Access the current cell
+    Cell* cell = &grid[index];
+    Cell tempCell;
 
-    resolveInput(grid, index); // Resolve the input for the cell after collecting all data
-      
+    // Lock the cell and make a copy
+    pthread_mutex_lock(&cell->lock);
+    memcpy(&tempCell, cell, sizeof(Cell));
+    pthread_mutex_unlock(&cell->lock);
+
+    // Collect data from parent, neighbours, and children using the temporary copy
+    collectParentData(grid, &tempCell, index);
+    collectNeighbourData(grid, &tempCell, index);
+    collectChildData(grid, &tempCell, index);
+
+    // Resolve the input for the cell
+    resolveInput(grid, &tempCell, index);
+
+    // Lock the cell again and write back the updated data
+    pthread_mutex_lock(&cell->lock);
+    memcpy(cell, &tempCell, sizeof(Cell));
+    pthread_mutex_unlock(&cell->lock);
 }
-
 
 
 
@@ -333,8 +342,8 @@ void applyWinningAttacker(Cell* cell, Cell* winningAttacker, bool powerAttack) {
     // pthread_mutex_unlock(&winningAttacker->lock); // Unlock the winning attacker cell
 }
 
-void resolveInput(Cell* grid, int index) {
-    Cell* cell = &grid[index];
+void resolveInput(Cell* grid, Cell* cell, int index) {
+
     int cellTeam = cell->team;
 
 

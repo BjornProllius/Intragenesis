@@ -79,11 +79,6 @@ void updateCellIdentity(Cell* grid, int index) {
 
 void populateForeignCellData(foreignCellData* foreignData, Cell* cell, int index) {
 
-    if (cell == NULL) {
-        printf("Error: Null cell pointer passed to populateForeignCellData\n");
-        return;
-    }
-    printf("Populating foreign cell data for index %d\n", index);
 
     // Populate the foreignCellData struct with information from the Cell
     foreignData->index = index; // Use the cell's target index

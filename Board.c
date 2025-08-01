@@ -113,23 +113,23 @@ void generateRandomTargetForThread(unsigned int threadTargetVectors[16][NUM_VALU
 
 
 
-void iterateCellsMultithreaded(Cell* grid, int totalCells, int totalLevels, int baseRows, int baseCols, void (*callback)(Cell*, int)) {
+void iterateCellsMultithreaded(Cell* grid, int totalCells, void (*callback)(Cell*, int)) {
     const int numThreads = 4; // Number of threads
     pthread_t threads[numThreads];
     ThreadArgs threadArgs[numThreads];
 
     // Calculate rows and columns for each level
-    int rows = baseRows;
-    int cols = baseCols;
+    int rows = BASE_ROWS;
+    int cols = BASE_COLS;
 
     for (int i = 0; i < numThreads; i++) {
         threadArgs[i].grid = grid;
-        threadArgs[i].totalLevels = totalLevels;
+        threadArgs[i].totalLevels = LEVELS;
         threadArgs[i].numThreads = numThreads;
         threadArgs[i].callback = callback;
         threadArgs[i].threadId = i;
 
-        for (int level = 0; level < totalLevels; level++) {
+        for (int level = 0; level < LEVELS; level++) {
             threadArgs[i].rowsPerLevel[level] = rows;
             threadArgs[i].colsPerLevel[level] = cols;
             rows /= 2; // Each level has half the rows
